@@ -1,0 +1,84 @@
+spring:
+  application:
+    name: smart-log-triage-engine
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/triage}
+    username: ${POSTGRES_USER:triage}
+    password: ${POSTGRES_PASSWORD:triage}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 5000
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2s
+      connect-timeout: 2s
+
+  ai:
+    model:
+      # Select the active chat provider: openai | ollama | none
+      chat: ${SPRING_AI_MODEL_CHAT:openai}
+    openai:
+      api-key: ${OPENAI_API_KEY:demo-key}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+      chat:
+        options:
+          model: ${OPENAI_CHAT_MODEL:gpt-4o-mini}
+          temperature: 0.2
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      chat:
+        options:
+          model: ${OLLAMA_CHAT_MODEL:llama3.1}
+          temperature: 0.2
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      llmTriage:
+        register-health-indicator: true
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+  ratelimiter:
+    instances:
+      llmTriage:
+        register-health-indicator: true
+        limit-for-period: 10
+        limit-refresh-period: 1s
+        timeout-duration: 0
+
+app:
+  incident:
+    cache-ttl-hours: ${INCIDENT_CACHE_TTL_HOURS:24}
+  llm:
+    fallback-root-cause: "LLM Service Unavailable. Default triage queued."
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers,circuitbreakerevents,ratelimiters
+  endpoint:
+    health:
+      show-details: always
+
+server:
+  port: ${SERVER_PORT:8080}
