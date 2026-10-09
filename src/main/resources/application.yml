@@ -67,7 +67,7 @@ resilience4j:
 
 app:
   incident:
-    cache-ttl-hours: ${INCIDENT_CACHE_TTL_HOURS:24}
+    cache-ttl: ${INCIDENT_CACHE_TTL:24h}
   llm:
     fallback-root-cause: "LLM Service Unavailable. Default triage queued."
 
