@@ -75,9 +75,7 @@ public class TriageService {
     private DiagnosticReport normalize(TriageRequest request, String errorHash, LlmDiagnosis diagnosis) {
         DiagnosticReport report = diagnosis.report();
         report.setErrorHash(errorHash);
-        if (report.getIncidentId() == null || report.getIncidentId().isBlank()) {
-            report.setIncidentId(UUID.randomUUID().toString());
-        }
+        report.setIncidentId(UUID.randomUUID().toString());
         return report;
     }
 

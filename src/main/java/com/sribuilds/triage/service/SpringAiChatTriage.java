@@ -5,8 +5,7 @@ import com.sribuilds.triage.dto.TriageRequest;
 import com.sribuilds.triage.exception.LlmUnavailableException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /**
@@ -19,7 +18,6 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-@ConditionalOnBean(ChatClient.Builder.class)
 @RequiredArgsConstructor
 public class SpringAiChatTriage {
 
@@ -52,7 +50,7 @@ public class SpringAiChatTriage {
             Produce the structured diagnostic report now.
             """;
 
-    private final ChatClient.Builder chatClientBuilder;
+    private final ObjectProvider<org.springframework.ai.chat.client.ChatClient.Builder> chatClientBuilderProvider;
 
     /**
      * Invokes the configured chat model and parses a structured report.
@@ -63,8 +61,12 @@ public class SpringAiChatTriage {
      *         unparseable content (re-routed to the circuit breaker fallback)
      */
     public DiagnosticReport analyze(TriageRequest request) {
+        org.springframework.ai.chat.client.ChatClient.Builder chatClientBuilder = chatClientBuilderProvider.getIfAvailable();
+        if (chatClientBuilder == null) {
+            throw new LlmUnavailableException("No LLM chat provider configured (spring.ai.model.chat=none)");
+        }
         try {
-            ChatClient chatClient = chatClientBuilder.build();
+            org.springframework.ai.chat.client.ChatClient chatClient = chatClientBuilder.build();
             return chatClient.prompt()
                     .system(SYSTEM_PROMPT)
                     .user(u -> u.text(USER_PROMPT)
