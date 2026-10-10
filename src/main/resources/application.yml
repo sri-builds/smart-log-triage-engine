@@ -82,3 +82,32 @@ management:
 
 server:
   port: ${SERVER_PORT:8080}
+
+# ---------------------------------------------------------------------
+# Profile: local
+# Runs without Docker: embedded H2 database and no LLM provider
+# (spring.ai.model.chat=none), so the deterministic fallback path is exercised.
+#   ./mvnw spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=local"
+# ---------------------------------------------------------------------
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:triage;MODE=PostgreSQL;DB_CLOSE_DELAY=-1}
+    driver-class-name: org.h2.Driver
+    username: ${POSTGRES_USER:sa}
+    password: ${POSTGRES_PASSWORD:}
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  ai:
+    model:
+      chat: none
+

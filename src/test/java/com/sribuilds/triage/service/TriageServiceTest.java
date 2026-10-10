@@ -39,7 +39,8 @@ class TriageServiceTest {
         llmDiagnosticsClient = mock(LlmDiagnosticsClient.class);
         reportRepository = mock(IncidentReportRepository.class);
         objectMapper = new ObjectMapper();
-        triageService = new TriageService(cacheService, llmDiagnosticsClient, reportRepository, objectMapper);
+        triageService = new TriageService(cacheService, llmDiagnosticsClient, reportRepository,
+                new SchemaValidator(), objectMapper);
     }
 
     private TriageRequest request() {

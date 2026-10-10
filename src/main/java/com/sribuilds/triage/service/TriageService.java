@@ -33,6 +33,7 @@ public class TriageService {
     private final IncidentCacheService cacheService;
     private final LlmDiagnosticsClient llmDiagnosticsClient;
     private final IncidentReportRepository reportRepository;
+    private final SchemaValidator schemaValidator;
     private final ObjectMapper objectMapper;
 
     /**
@@ -53,6 +54,9 @@ public class TriageService {
         log.info("Triage cache MISS for errorHash={}; invoking LLM diagnostics", errorHash);
         LlmDiagnosis diagnosis = llmDiagnosticsClient.diagnose(request);
         DiagnosticReport report = normalize(request, errorHash, diagnosis);
+
+        // Strict JSON schema enforcement: reject non-conforming LLM payloads.
+        schemaValidator.validate(report);
 
         if (diagnosis.degraded()) {
             log.warn("LLM provider degraded; returning fallback WITHOUT caching errorHash={}", errorHash);
